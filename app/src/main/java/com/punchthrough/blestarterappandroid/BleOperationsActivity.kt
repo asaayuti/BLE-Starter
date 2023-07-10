@@ -37,11 +37,7 @@ import com.punchthrough.blestarterappandroid.ble.isReadable
 import com.punchthrough.blestarterappandroid.ble.isWritable
 import com.punchthrough.blestarterappandroid.ble.isWritableWithoutResponse
 import com.punchthrough.blestarterappandroid.ble.toHexString
-import kotlinx.android.synthetic.main.activity_ble_operations.characteristics_recycler_view
-import kotlinx.android.synthetic.main.activity_ble_operations.log_scroll_view
-import kotlinx.android.synthetic.main.activity_ble_operations.log_text_view
-import kotlinx.android.synthetic.main.activity_ble_operations.mtu_field
-import kotlinx.android.synthetic.main.activity_ble_operations.request_mtu_button
+import com.punchthrough.blestarterappandroid.databinding.ActivityBleOperationsBinding
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.noButton
 import org.jetbrains.anko.selector
@@ -79,31 +75,36 @@ class BleOperationsActivity : AppCompatActivity() {
         }
     }
     private var notifyingCharacteristics = mutableListOf<UUID>()
+    private lateinit var binding: ActivityBleOperationsBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         ConnectionManager.registerListener(connectionEventListener)
         super.onCreate(savedInstanceState)
         device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
             ?: error("Missing BluetoothDevice from MainActivity!")
-
-        setContentView(R.layout.activity_ble_operations)
+        binding = ActivityBleOperationsBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             setDisplayShowTitleEnabled(true)
             title = getString(R.string.ble_playground)
         }
         setupRecyclerView()
-        request_mtu_button.setOnClickListener {
-            if (mtu_field.text.isNotEmpty() && mtu_field.text.isNotBlank()) {
-                mtu_field.text.toString().toIntOrNull()?.let { mtu ->
-                    log("Requesting for MTU value of $mtu")
-                    ConnectionManager.requestMtu(device, mtu)
-                } ?: log("Invalid MTU value: ${mtu_field.text}")
-            } else {
-                log("Please specify a numeric value for desired ATT MTU (23-517)")
+        binding.apply {
+            requestMtuButton.setOnClickListener {
+                if (mtuField.text.isNotEmpty() && mtuField.text.isNotBlank()) {
+                    mtuField.text.toString().toIntOrNull()?.let { mtu ->
+                        log("Requesting for MTU value of $mtu")
+                        ConnectionManager.requestMtu(device, mtu)
+                    } ?: log("Invalid MTU value: ${mtuField.text}")
+                } else {
+                    log("Please specify a numeric value for desired ATT MTU (23-517)")
+                }
+                hideKeyboard()
             }
-            hideKeyboard()
         }
+
     }
 
     override fun onDestroy() {
@@ -123,31 +124,35 @@ class BleOperationsActivity : AppCompatActivity() {
 //    }
 
     private fun setupRecyclerView() {
-        characteristics_recycler_view.apply {
-            adapter = characteristicAdapter
-            layoutManager = LinearLayoutManager(
-                this@BleOperationsActivity,
-                RecyclerView.VERTICAL,
-                false
-            )
-            isNestedScrollingEnabled = false
-        }
+        binding.apply {
+            characteristicsRecyclerView.apply {
+                adapter = characteristicAdapter
+                layoutManager = LinearLayoutManager(
+                    this@BleOperationsActivity,
+                    RecyclerView.VERTICAL,
+                    false
+                )
+                isNestedScrollingEnabled = false
+            }
 
-        val animator = characteristics_recycler_view.itemAnimator
-        if (animator is SimpleItemAnimator) {
-            animator.supportsChangeAnimations = false
+            val animator = characteristicsRecyclerView.itemAnimator
+            if (animator is SimpleItemAnimator) {
+                animator.supportsChangeAnimations = false
+            }
         }
     }
 
-    @SuppressLint("SetTextI18n")
     private fun log(message: String) {
         val formattedMessage = String.format("%s: %s", dateFormatter.format(Date()), message)
         runOnUiThread {
-            val currentLogText = log_text_view.text.ifEmpty {
-                "Beginning of log."
+            binding.apply {
+                val currentLogText = logTextView.text.ifEmpty {
+                    "Beginning of log."
+                }
+                logTextView.text = "$currentLogText\n$formattedMessage"
+                logScrollView.post { logScrollView.fullScroll(View.FOCUS_DOWN) }
             }
-            log_text_view.text = "$currentLogText\n$formattedMessage"
-            log_scroll_view.post { log_scroll_view.fullScroll(View.FOCUS_DOWN) }
+
         }
     }
 

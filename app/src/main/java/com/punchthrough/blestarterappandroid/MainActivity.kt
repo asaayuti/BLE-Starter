@@ -46,8 +46,7 @@ import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.LocationSettingsStatusCodes
 import com.punchthrough.blestarterappandroid.ble.ConnectionEventListener
 import com.punchthrough.blestarterappandroid.ble.ConnectionManager
-import kotlinx.android.synthetic.main.activity_main.scan_button
-import kotlinx.android.synthetic.main.activity_main.scan_results_recycler_view
+import com.punchthrough.blestarterappandroid.databinding.ActivityMainBinding
 import org.jetbrains.anko.alert
 import timber.log.Timber
 
@@ -67,6 +66,7 @@ class MainActivity : AppCompatActivity() {
      * Properties
      *******************************************/
 
+    private lateinit var binding: ActivityMainBinding
     private val bluetoothAdapter: BluetoothAdapter by lazy {
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothManager.adapter
@@ -83,7 +83,7 @@ class MainActivity : AppCompatActivity() {
     private var isScanning = false
         set(value) {
             field = value
-            runOnUiThread { scan_button.text = if (value) "Stop Scan" else "Start Scan" }
+            runOnUiThread { binding.scanButton.text = if (value) "Stop Scan" else "Start Scan" }
         }
 
     private val scanResults = mutableListOf<ScanResult>()
@@ -108,7 +108,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             requestPermission(Manifest.permission.BLUETOOTH_CONNECT, ENABLE_BLUETOOTH_REQUEST_CODE)
@@ -118,7 +120,7 @@ class MainActivity : AppCompatActivity() {
             Timber.plant(Timber.DebugTree())
         }
 //        scan_button.setOnClickListener { if (isScanning) stopBleScan() else startBleScan() }
-        scan_button.setOnClickListener {
+        binding.scanButton.setOnClickListener {
             if (isScanning) {
                 stopBleScan()
             } else if (!isGPSEnabled(this)) {
@@ -318,19 +320,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        scan_results_recycler_view.apply {
-            adapter = scanResultAdapter
-            layoutManager = LinearLayoutManager(
-                this@MainActivity,
-                RecyclerView.VERTICAL,
-                false
-            )
-            isNestedScrollingEnabled = false
-        }
+        binding.apply {
+            scanResultsRecyclerView.apply {
+                adapter = scanResultAdapter
+                layoutManager = LinearLayoutManager(
+                    this@MainActivity,
+                    RecyclerView.VERTICAL,
+                    false
+                )
+                isNestedScrollingEnabled = false
+            }
 
-        val animator = scan_results_recycler_view.itemAnimator
-        if (animator is SimpleItemAnimator) {
-            animator.supportsChangeAnimations = false
+            val animator = scanResultsRecyclerView.itemAnimator
+            if (animator is SimpleItemAnimator) {
+                animator.supportsChangeAnimations = false
+            }
         }
     }
 

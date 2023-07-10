@@ -17,13 +17,11 @@
 package com.punchthrough.blestarterappandroid
 
 import android.bluetooth.BluetoothGattCharacteristic
-import android.view.View
+import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.punchthrough.blestarterappandroid.ble.printProperties
-import kotlinx.android.synthetic.main.row_characteristic.view.characteristic_properties
-import kotlinx.android.synthetic.main.row_characteristic.view.characteristic_uuid
-import org.jetbrains.anko.layoutInflater
+import com.punchthrough.blestarterappandroid.databinding.RowCharacteristicBinding
 
 class CharacteristicAdapter(
     private val items: List<BluetoothGattCharacteristic>,
@@ -31,12 +29,9 @@ class CharacteristicAdapter(
 ) : RecyclerView.Adapter<CharacteristicAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = parent.context.layoutInflater.inflate(
-            R.layout.row_characteristic,
-            parent,
-            false
-        )
-        return ViewHolder(view, onClickListener)
+        val binding =
+            RowCharacteristicBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return ViewHolder(binding, onClickListener)
     }
 
     override fun getItemCount() = items.size
@@ -47,14 +42,17 @@ class CharacteristicAdapter(
     }
 
     class ViewHolder(
-        private val view: View,
+        private val binding: RowCharacteristicBinding,
         private val onClickListener: ((characteristic: BluetoothGattCharacteristic) -> Unit)
-    ) : RecyclerView.ViewHolder(view) {
+    ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(characteristic: BluetoothGattCharacteristic) {
-            view.characteristic_uuid.text = characteristic.uuid.toString()
-            view.characteristic_properties.text = characteristic.printProperties()
-            view.setOnClickListener { onClickListener.invoke(characteristic) }
+            binding.apply {
+                characteristicUuid.text = characteristic.uuid.toString()
+                characteristicProperties.text = characteristic.printProperties()
+                root.setOnClickListener { onClickListener.invoke(characteristic) }
+            }
+
         }
     }
 }
